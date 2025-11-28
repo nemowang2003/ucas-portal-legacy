@@ -54,7 +54,17 @@ class LoginSession:
 
     def get(self, *args, **kwargs) -> dict:
         kwargs.setdefault("timeout", 3)
-        response = self.session.get(*args, **kwargs).text
+        for _ in range(10):
+            try:
+                response = self.session.get(*args, **kwargs).text
+            except requests.exceptions.ConnectTimeout:
+                pass
+            else:
+                break
+        else:
+            import sys
+
+            sys.exit(1)
         return json.loads(response[len(CALLBACK) + 1 : -1])
 
     def __enter__(self):
