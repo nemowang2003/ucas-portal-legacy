@@ -1,5 +1,6 @@
 import json
 import requests
+import sys
 
 CALLBACK = "_"
 TYPE = "1"
@@ -19,12 +20,14 @@ def translate_b64encode(msg: bytes, alpha: str) -> str:
     return result.translate(trans_table)
 
 
-def calc_info(info: dict, token: str) -> str:
-    import xxtea
+def calc_info(info: dict, challenge: str) -> str:
+    from . import xxtea
 
-    alpha = "LVoJPiCN2R8G90yg+hmFHuacZ1OWMnrsSTXkYpUq/3dlbfKwv6xztjI7DeBE45QA"
     json_data = json.dumps(info, separators=(",", ":"))
-    result = translate_b64encode(xxtea.encrypt(json_data, token), alpha)
+    result = translate_b64encode(
+        xxtea.encrypt(json_data, challenge).encode("latin-1"),
+        "LVoJPiCN2R8G90yg+hmFHuacZ1OWMnrsSTXkYpUq/3dlbfKwv6xztjI7DeBE45QA",
+    )
     return "{SRBX1}" + result
 
 
@@ -54,17 +57,18 @@ class LoginSession:
 
     def get(self, *args, **kwargs) -> dict:
         kwargs.setdefault("timeout", 3)
-        for _ in range(10):
+        for _ in range(5):
             try:
                 response = self.session.get(*args, **kwargs).text
             except requests.exceptions.ConnectTimeout:
                 pass
+            except requests.exceptions.ConnectionError:
+                # UCAS is not connected, exit normally
+                sys.exit(0)
+            except Exception:
+                raise
             else:
                 break
-        else:
-            import sys
-
-            sys.exit(1)
         return json.loads(response[len(CALLBACK) + 1 : -1])
 
     def __enter__(self):
@@ -78,8 +82,6 @@ def main() -> None:
     import time
 
     with LoginSession() as session:
-        session.trust_env = False
-
         response = session.get(
             "https://portal.ucas.ac.cn/cgi-bin/rad_user_info",
             params={"callback": CALLBACK},
@@ -140,6 +142,4 @@ def main() -> None:
             },
         )
         if response["error"] != "ok":
-            import sys
-
             sys.exit(1)
