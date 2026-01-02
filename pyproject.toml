@@ -1,7 +1,7 @@
 [project]
-name = "ucas-login"
-version = "0.2.0"
-description = "Add your description here"
+name = "ucas-portal"
+version = "0.3.0"
+description = "中国科学院大学 (UCAS) 校园网 Portal 认证命令行工具"
 readme = "README.md"
 authors = [
     { name = "nemowang", email = "nemowang@outlook.com" }
@@ -12,11 +12,24 @@ dependencies = [
 ]
 
 [project.scripts]
-ucas = "ucas_login:main"
+ucas-portal = "ucas_portal:main"
 
 [build-system]
 requires = ["uv_build>=0.9.11,<0.10.0"]
 build-backend = "uv_build"
 
-[tool.uv.build-backend]
-module-root = ""
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+
+[tool.ruff.lint]
+extend-ignore = ["E501"]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+]
+
+[tool.ruff.lint.isort]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
