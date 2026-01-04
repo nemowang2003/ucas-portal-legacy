@@ -29,7 +29,16 @@ def main() -> None:
         help="Your UCAS password [env: UCAS_PASSWORD]",
         default=password_from_env,
     )
-    args = parser.parse_args()
 
+    subparsers = parser.add_subparsers(dest="command")
+    subparsers.add_parser("login", help="login potal (default command)")
+    subparsers.add_parser("logout", help="logout portal")
+
+    args = parser.parse_args()
+    command = args.command or "login"
     client = UCASPortalClient(args.username, args.password)
-    client.login()
+
+    if command == "login":
+        client.login()
+    elif command == "logout":
+        client.logout()

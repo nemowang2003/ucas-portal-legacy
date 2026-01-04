@@ -4,15 +4,13 @@
 
 ## 功能
 
-- 支持校园网 Portal 登录
-- 支持校园网 Portal 登出
-- 命令行交互界面
+- 命令行交互界面校园网 Portal 登录（默认行为）与登出
 - 支持环境变量配置账号
 
 ## 安装
 
 ```bash
-uv tool install "git+ssh://git@github.com/nemowang2003/ucas-portal"
+uv tool install "git+ssh://git@github.com/nemowang2003/ucas-portal-legacy"
 ```
 
 ## 使用方法
@@ -21,12 +19,14 @@ uv tool install "git+ssh://git@github.com/nemowang2003/ucas-portal"
 
 ```bash
 # 使用命令行参数
-ucas-portal --username 你的学号 --password 你的密码
+ucas-portal --username 你的学号 --password 你的密码 [login]
+ucas-portal --username 你的学号 --password 你的密码 logout
 
 # 或使用环境变量
 export UCAS_USERNAME=你的学号
 export UCAS_PASSWORD=你的密码
-ucas-portal
+ucas-portal [login]
+ucas-portal logout
 ```
 
 ## 致谢

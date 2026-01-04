@@ -17,19 +17,3 @@ ucas-portal = "ucas_portal:main"
 [build-system]
 requires = ["uv_build>=0.9.11,<0.10.0"]
 build-backend = "uv_build"
-
-[tool.ruff]
-target-version = "py314"
-line-length = 100
-
-[tool.ruff.lint]
-extend-ignore = ["E501"]
-select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-]
-
-[tool.ruff.lint.isort]
-section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]

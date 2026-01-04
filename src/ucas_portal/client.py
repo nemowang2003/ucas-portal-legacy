@@ -158,55 +158,37 @@ class UCASPortalClient:
         if not data:
             return b""
 
-        # 1. 预处理数据：将 bytes 直接转为 32位无符号整数数组 ('I')
+        # 预处理 data: 将 bytes 转为 u32 的 array, 也就是 "I" 模式
         # 如果 data 长度不是 4 的倍数，先补零对齐
-        n = len(data)
-        padding = (4 - n % 4) % 4
-        if padding:
-            data += b"\0" * padding
-
+        original_data_len = len(data)
+        remainder = original_data_len % 4
+        if remainder != 0:
+            data += b"\0" * (4 - remainder)
         v = array.array("I", data)
-        v.append(n)  # 在末尾存入长度信息
+        v.append(original_data_len)  # 在末尾存入长度信息
 
-        # 2. 预处理 Key
-        # 确保 key 至少 16 字节，并转为 array
+        # 预处理 key
+        # 确保 key 至少 16 字节，并转为 u32 的 array
         if len(key) < 16:
             key += b"\0" * (16 - len(key))
         k = array.array("I", key[:16])
 
-        # 3. 初始化变量
-        n_idx = len(v) - 1
-        z = v[n_idx]
-        y = v[0]
-        delta = 0x9E3779B9
-        q = 6 + 52 // (n_idx + 1)
+        n = len(v)
+        z = v[n - 1]
         sum_val = 0
-
-        # 4. 加密循环
-        while q > 0:
-            sum_val = (sum_val + delta) & 0xFFFFFFFF
+        for _ in range(6 + 52 // n):
+            sum_val += 0x9E3779B9
+            sum_val &= 0xFFFFFFFF
             e = (sum_val >> 2) & 3
-
-            # 内部循环：处理前 n-1 个字节
-            p = 0
-            while p < n_idx:
-                y = v[p + 1]
+            for p in range(n):
+                y = v[(p + 1) % n]  # 当 p 为 n-1 时 y 为 v[0]
                 m = z >> 5 ^ y << 2
-                m = (m + (y >> 3 ^ z << 4 ^ (sum_val ^ y))) & 0xFFFFFFFF
-                m = (m + (k[(p & 3) ^ e] ^ z)) & 0xFFFFFFFF
-
-                v[p] = (v[p] + m) & 0xFFFFFFFF
+                m += y >> 3 ^ z << 4 ^ (sum_val ^ y)
+                m &= 0xFFFFFFFF
+                m += k[(p & 3) ^ e] ^ z
+                m &= 0xFFFFFFFF
+                v[p] += m
+                v[p] &= 0xFFFFFFFF
                 z = v[p]
-                p += 1
-
-            # 最后一轮处理：处理第 n 个字节
-            y = v[0]
-            m = z >> 5 ^ y << 2
-            m = (m + (y >> 3 ^ z << 4 ^ (sum_val ^ y))) & 0xFFFFFFFF
-            m = (m + (k[(p & 3) ^ e] ^ z)) & 0xFFFFFFFF
-
-            v[n_idx] = (v[n_idx] + m) & 0xFFFFFFFF
-            z = v[n_idx]
-            q -= 1
 
         return bytes(v)
